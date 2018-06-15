@@ -18,6 +18,7 @@
 function deidentifyWithMask(
   callingProjectId,
   string,
+  infoTypes,
   maskingCharacter,
   numberToMask
 ) {
@@ -45,6 +46,9 @@ function deidentifyWithMask(
   const item = {value: string};
   const request = {
     parent: dlp.projectPath(callingProjectId),
+    inspectConfig: {
+      infoTypes: infoTypes,
+    },
     deidentifyConfig: {
       infoTypeTransformations: {
         transformations: [
@@ -240,6 +244,7 @@ function deidentifyWithDateShift(
 function deidentifyWithFpe(
   callingProjectId,
   string,
+  infoTypes,
   alphabet,
   surrogateType,
   keyName,
@@ -295,6 +300,9 @@ function deidentifyWithFpe(
   const item = {value: string};
   const request = {
     parent: dlp.projectPath(callingProjectId),
+    inspectConfig: {
+      infoTypes: infoTypes,
+    },
     deidentifyConfig: {
       infoTypeTransformations: {
         transformations: [
@@ -430,6 +438,7 @@ const cli = require(`yargs`)
       deidentifyWithMask(
         opts.callingProjectId,
         opts.string,
+        opts.infoTypes,
         opts.maskingCharacter,
         opts.numberToMask
       )
@@ -459,6 +468,7 @@ const cli = require(`yargs`)
       deidentifyWithFpe(
         opts.callingProjectId,
         opts.string,
+        opts.infoTypes,
         opts.alphabet,
         opts.surrogateType,
         opts.keyName,
@@ -530,6 +540,16 @@ const cli = require(`yargs`)
     type: 'string',
     alias: 'callingProjectId',
     default: process.env.GCLOUD_PROJECT || '',
+  })
+  .option('t', {
+    alias: 'infoTypes',
+    default: ['PHONE_NUMBER', 'EMAIL_ADDRESS', 'CREDIT_CARD_NUMBER'],
+    type: 'array',
+    global: true,
+    coerce: infoTypes =>
+      infoTypes.map(type => {
+        return {name: type};
+      }),
   })
   .example(`node $0 deidMask "My SSN is 372819127"`)
   .example(
