@@ -23,6 +23,8 @@ function inspectString(
   minLikelihood,
   maxFindings,
   infoTypes,
+  customDictionaries,
+  customRegexes,
   includeQuote
 ) {
   // [START dlp_inspect_string]
@@ -58,6 +60,7 @@ function inspectString(
     parent: dlp.projectPath(callingProjectId),
     inspectConfig: {
       infoTypes: infoTypes,
+      customInfoTypes: customDictionaries.concat(customRegexes),
       minLikelihood: minLikelihood,
       includeQuote: includeQuote,
       limits: {
@@ -97,6 +100,8 @@ function inspectFile(
   minLikelihood,
   maxFindings,
   infoTypes,
+  customDictionaries,
+  customRegexes,
   includeQuote
 ) {
   // [START dlp_inspect_file]
@@ -146,6 +151,7 @@ function inspectFile(
     parent: dlp.projectPath(callingProjectId),
     inspectConfig: {
       infoTypes: infoTypes,
+      customInfoTypes: customDictionaries.concat(customRegexes),
       minLikelihood: minLikelihood,
       includeQuote: includeQuote,
       limits: {
@@ -187,7 +193,9 @@ function inspectGCSFile(
   subscriptionId,
   minLikelihood,
   maxFindings,
-  infoTypes
+  infoTypes,
+  customDictionaries,
+  customRegexes
 ) {
   // [START dlp_inspect_gcs]
   // Import the Google Cloud client libraries
@@ -239,6 +247,7 @@ function inspectGCSFile(
     inspectJob: {
       inspectConfig: {
         infoTypes: infoTypes,
+        customInfoTypes: customDictionaries.concat(customRegexes),
         minLikelihood: minLikelihood,
         limits: {
           maxFindingsPerRequest: maxFindings,
@@ -334,7 +343,9 @@ function inspectDatastore(
   subscriptionId,
   minLikelihood,
   maxFindings,
-  infoTypes
+  infoTypes,
+  customDictionaries,
+  customRegexes
 ) {
   // [START dlp_inspect_datastore]
   // Import the Google Cloud client libraries
@@ -396,6 +407,7 @@ function inspectDatastore(
     inspectJob: {
       inspectConfig: {
         infoTypes: infoTypes,
+        customInfoTypes: customDictionaries.concat(customRegexes),
         minLikelihood: minLikelihood,
         limits: {
           maxFindingsPerRequest: maxFindings,
@@ -491,7 +503,9 @@ function inspectBigquery(
   subscriptionId,
   minLikelihood,
   maxFindings,
-  infoTypes
+  infoTypes,
+  customDictionaries,
+  customRegexes
 ) {
   // [START dlp_inspect_bigquery]
   // Import the Google Cloud client libraries
@@ -550,6 +564,7 @@ function inspectBigquery(
     inspectJob: {
       inspectConfig: {
         infoTypes: infoTypes,
+        customInfoTypes: customDictionaries.concat(customRegexes),
         minLikelihood: minLikelihood,
         limits: {
           maxFindingsPerRequest: maxFindings,
@@ -637,6 +652,7 @@ function inspectBigquery(
   // [END dlp_inspect_bigquery]
 }
 
+const util = require('util')
 const cli = require(`yargs`) // eslint-disable-line
   .demand(1)
   .command(
@@ -650,6 +666,8 @@ const cli = require(`yargs`) // eslint-disable-line
         opts.minLikelihood,
         opts.maxFindings,
         opts.infoTypes,
+        opts.customDictionaries,
+        opts.customRegexes,
         opts.includeQuote
       )
   )
@@ -664,6 +682,8 @@ const cli = require(`yargs`) // eslint-disable-line
         opts.minLikelihood,
         opts.maxFindings,
         opts.infoTypes,
+        opts.customDictionaries,
+        opts.customRegexes,
         opts.includeQuote
       )
   )
@@ -680,7 +700,9 @@ const cli = require(`yargs`) // eslint-disable-line
         opts.subscriptionId,
         opts.minLikelihood,
         opts.maxFindings,
-        opts.infoTypes
+        opts.infoTypes,
+        opts.customDictionaries,
+        opts.customRegexes
       )
   )
   .command(
@@ -697,7 +719,9 @@ const cli = require(`yargs`) // eslint-disable-line
         opts.subscriptionId,
         opts.minLikelihood,
         opts.maxFindings,
-        opts.infoTypes
+        opts.infoTypes,
+        opts.customDictionaries,
+        opts.customRegexes
       );
     }
   )
@@ -721,7 +745,9 @@ const cli = require(`yargs`) // eslint-disable-line
         opts.subscriptionId,
         opts.minLikelihood,
         opts.maxFindings,
-        opts.infoTypes
+        opts.infoTypes,
+        opts.customDictionaries,
+        opts.customRegexes
       )
   )
   .option('m', {
@@ -768,6 +794,38 @@ const cli = require(`yargs`) // eslint-disable-line
     coerce: infoTypes =>
       infoTypes.map(type => {
         return {name: type};
+      }),
+  })
+  .option('d', {
+    alias: 'customDictionaries',
+    default: [],
+    type: 'array',
+    global: true,
+    coerce: customDictionaries =>
+      customDictionaries.map((phrases, idx) => {
+        return {
+	  infoType: {name: util.format('CUSTOM_DICTIONARY_%s', idx)},
+          dictionary: {
+            wordList: {
+              words: phrases.split(','),
+            },
+          },
+	};
+      }),
+  })
+  .option('r', {
+    alias: 'customRegexes',
+    default: [],
+    type: 'array',
+    global: true,
+    coerce: customRegexes =>
+      customRegexes.map((regex, idx) => {
+        return {
+	  infoType: {name: util.format('CUSTOM_REGEX_%s', idx)},
+          regex: {
+            pattern: regex,
+          },
+	};
       }),
   })
   .option('n', {
